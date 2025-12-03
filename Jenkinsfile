@@ -57,6 +57,14 @@ pipeline {
     }
     
     post {
-        // TODO: Partie bonus
+        success {
+            echo "Build #${BUILD_NUMBER} OK – déploiement effectué."
+        }
+        failure {
+            echo "Build #${BUILD_NUMBER} en échec."
+        }
+        always {
+            echo "Pipeline terminé pour le build #${BUILD_NUMBER}."
+        }
     }
 }
