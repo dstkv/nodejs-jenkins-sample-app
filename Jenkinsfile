@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = "jenkins-demo-app"
         DOCKER_TAG = "${BUILD_NUMBER}"
+        FULL_IMAGE = "${DOCKER_IMAGE}:${DOCKER_TAG}"
     }
     
     stages {
