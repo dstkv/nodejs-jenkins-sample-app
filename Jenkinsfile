@@ -2,11 +2,9 @@ pipeline {
     agent any
     
     environment {
+        // Ces variables restent utiles pour les logs et l'env du conteneur
         DOCKER_IMAGE   = "jenkins-demo-app"
         DOCKER_TAG     = "${BUILD_NUMBER}"
-        FULL_IMAGE     = "${DOCKER_IMAGE}:${DOCKER_TAG}"
-        // Si ton docker-compose référence juste "jenkins-demo-app:latest",
-        // tu peux aussi choisir de ne PAS tagger par BUILD_NUMBER
     }
     
     stages {
@@ -28,27 +26,20 @@ pipeline {
             }
         }
         
-        stage('Build Docker Image') {
-            steps {
-                // 2 options :
-                // 1) Build direct avec docker (si compose utilise cette image)
-                sh "docker build -t ${FULL_IMAGE} ."
-                // 2) Ou laisser compose faire le build:
-                // sh "docker compose build"
-            }
-        }
-        
-        stage('Deploy with Docker Compose') {
+        stage('Build & Deploy with Docker Compose') {
             steps {
                 script {
-                    // On se base sur le docker-compose du repo
-                    // (par défaut docker-compose.yml à la racine)
+                    // Optionnel : arrêter les conteneurs existants
                     sh """
-                        echo "Stopping existing stack..."
+                        echo "Stopping existing stack (if any)..."
                         docker compose down || true
+                    """
 
-                        echo "Starting stack with docker compose..."
-                        docker compose up -d
+                    // Build + run basé sur ton docker-compose.yml
+                    // BUILD_NUMBER est passé à compose pour l'env du service
+                    sh """
+                        echo "Building and starting stack with docker compose..."
+                        BUILD_NUMBER=${BUILD_NUMBER} docker compose up -d --build
                     """
                 }
             }
@@ -57,7 +48,7 @@ pipeline {
     
     post {
         success {
-            echo "Build #${BUILD_NUMBER} OK – déploiement effectué via docker compose."
+            echo "Build #${BUILD_NUMBER} OK – stack démarrée via docker compose (port 3000)."
         }
         failure {
             echo "Build #${BUILD_NUMBER} en échec."
