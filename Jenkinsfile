@@ -6,6 +6,10 @@ pipeline {
         DOCKER_IMAGE   = "jenkins-demo-app"
         DOCKER_TAG     = "${BUILD_NUMBER}"
     }
+
+    tools {
+        nodejs "NodeJS-16"
+    }
     
     stages {
         stage('Checkout') {
