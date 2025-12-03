@@ -2,10 +2,11 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_IMAGE = "jenkins-demo-app"
-        CONTAINER_NAME = "jenkins-demo-app"
-        DOCKER_TAG = "${BUILD_NUMBER}"
-        FULL_IMAGE = "${DOCKER_IMAGE}:${DOCKER_TAG}"
+        DOCKER_IMAGE   = "jenkins-demo-app"
+        DOCKER_TAG     = "${BUILD_NUMBER}"
+        FULL_IMAGE     = "${DOCKER_IMAGE}:${DOCKER_TAG}"
+        // Si ton docker-compose référence juste "jenkins-demo-app:latest",
+        // tu peux aussi choisir de ne PAS tagger par BUILD_NUMBER
     }
     
     stages {
@@ -29,29 +30,25 @@ pipeline {
         
         stage('Build Docker Image') {
             steps {
-                script {
-                    sh "docker build -t ${FULL_IMAGE} ."
-                }
+                // 2 options :
+                // 1) Build direct avec docker (si compose utilise cette image)
+                sh "docker build -t ${FULL_IMAGE} ."
+                // 2) Ou laisser compose faire le build:
+                // sh "docker compose build"
             }
         }
         
-        stage('Deploy') {
+        stage('Deploy with Docker Compose') {
             steps {
                 script {
+                    // On se base sur le docker-compose du repo
+                    // (par défaut docker-compose.yml à la racine)
                     sh """
-                        if [ \$(docker ps -aq -f name=${CONTAINER_NAME}) ]; then
-                          echo "Stopping old container..."
-                          docker stop ${CONTAINER_NAME} || true
-                          echo "Removing old container..."
-                          docker rm ${CONTAINER_NAME} || true
-                        fi
-                    """
+                        echo "Stopping existing stack..."
+                        docker compose down || true
 
-                    sh """
-                        echo "Starting new container..."
-                        docker run -d --name ${CONTAINER_NAME} \\
-                          -p 3000:3000 \\
-                          ${FULL_IMAGE}
+                        echo "Starting stack with docker compose..."
+                        docker compose up -d
                     """
                 }
             }
@@ -60,7 +57,7 @@ pipeline {
     
     post {
         success {
-            echo "Build #${BUILD_NUMBER} OK – déploiement effectué."
+            echo "Build #${BUILD_NUMBER} OK – déploiement effectué via docker compose."
         }
         failure {
             echo "Build #${BUILD_NUMBER} en échec."
