@@ -26,13 +26,33 @@ pipeline {
         }
         
         stage('Build Docker Image') {
-            // TODO: Construire l'image Docker
+            steps {
+                script {
+                    sh "docker build -t ${FULL_IMAGE} ."
+                }
+            }
         }
         
         stage('Deploy') {
-            // TODO: Déployer le conteneur
-            // Arrêter l'ancien conteneur s'il existe 
-            // Démarrer le nouveau conteneur avec la nouvelle version
+            steps {
+                script {
+                    sh """
+                        if [ \$(docker ps -aq -f name=${CONTAINER_NAME}) ]; then
+                          echo "Stopping old container..."
+                          docker stop ${CONTAINER_NAME} || true
+                          echo "Removing old container..."
+                          docker rm ${CONTAINER_NAME} || true
+                        fi
+                    """
+
+                    sh """
+                        echo "Starting new container..."
+                        docker run -d --name ${CONTAINER_NAME} \\
+                          -p 3000:3000 \\
+                          ${FULL_IMAGE}
+                    """
+                }
+            }
         }
     }
     
