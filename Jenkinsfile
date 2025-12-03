@@ -29,6 +29,13 @@ pipeline {
                 sh 'npm test'
             }
         }
+
+        stage('SonarQube Analysis') {
+            def scannerHome = tool 'SonarScanner';
+            withSonarQubeEnv() {
+                sh "${scannerHome}/bin/sonar-scanner"
+            }
+        }
         
         stage('Build & Deploy with Docker Compose') {
             steps {
