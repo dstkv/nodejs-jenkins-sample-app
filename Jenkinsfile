@@ -8,15 +8,21 @@ pipeline {
     
     stages {
         stage('Checkout') {
-            // TODO: Récupérer le code source
+            steps {
+                checkout scm
+            }
         }
         
         stage('Install Dependencies') {
-            // TODO: Installer les dépendances
+            steps {
+                sh 'npm install'
+            }
         }
         
         stage('Run Tests') {
-            // TODO: Lancer les tests
+            steps {
+                sh 'npm test'
+            }
         }
         
         stage('Build Docker Image') {
